@@ -21,6 +21,7 @@ DATABASE_URL=
 JWT_SECRET=
 JWT_EXPIRES_IN=
 PORT=
+CORS_ORIGINS=
 ```
 
 의존성 설치:
@@ -54,6 +55,12 @@ http://localhost:3000/api-docs
 ```
 
 `PORT`를 변경한 경우 해당 포트로 접속합니다.
+
+`CORS_ORIGINS`는 쉼표로 구분된 origin 목록입니다.
+
+```env
+CORS_ORIGINS="http://localhost:3001,http://127.0.0.1:3001"
+```
 
 ## Verification
 
