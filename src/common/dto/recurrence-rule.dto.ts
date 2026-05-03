@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  Matches,
   Min,
 } from 'class-validator';
 
@@ -50,6 +51,7 @@ export class RecurrenceRuleDto {
 
   @ApiPropertyOptional({ example: '2026-12-31' })
   @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
   @IsDateString()
   endDate?: string;
 }

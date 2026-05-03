@@ -1,13 +1,24 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthUser } from '../common/types/auth-user.type';
 import { CalendarService } from './calendar.service';
 import { CalendarQueryDto } from './dto/calendar-query.dto';
+import {
+  CalendarEventItemDto,
+  CalendarResponseDto,
+  CalendarTaskItemDto,
+} from './dto/calendar-response.dto';
 
 @ApiTags('calendar')
 @ApiBearerAuth()
+@ApiExtraModels(CalendarEventItemDto, CalendarTaskItemDto)
 @UseGuards(JwtAuthGuard)
 @Controller('calendar')
 export class CalendarController {
@@ -17,6 +28,7 @@ export class CalendarController {
   @ApiOkResponse({
     description:
       'Returns events, event occurrences, dated tasks, and task occurrences in one items array.',
+    type: CalendarResponseDto,
   })
   getCalendar(@CurrentUser() user: AuthUser, @Query() query: CalendarQueryDto) {
     return this.calendarService.getCalendar(user.userId, query);

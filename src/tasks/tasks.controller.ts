@@ -15,6 +15,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import {
+  DeletedResponseDto,
+  TaskOccurrenceStatusResponseDto,
+  TaskResponseDto,
+} from '../common/dto/common-response.dto';
 import { UpdateOccurrenceStatusDto } from '../common/dto/occurrence-status.dto';
 import { UpdateStatusDto } from '../common/dto/status.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -31,25 +36,28 @@ export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  @ApiOkResponse({ description: 'Returns tasks owned by the current user.' })
+  @ApiOkResponse({
+    description: 'Returns tasks owned by the current user.',
+    type: [TaskResponseDto],
+  })
   findAll(@CurrentUser() user: AuthUser) {
     return this.tasksService.findAll(user.userId);
   }
 
   @Get(':id')
-  @ApiOkResponse({ description: 'Returns one task.' })
+  @ApiOkResponse({ description: 'Returns one task.', type: TaskResponseDto })
   findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.tasksService.findOne(user.userId, id);
   }
 
   @Post()
-  @ApiCreatedResponse({ description: 'Creates a task.' })
+  @ApiCreatedResponse({ description: 'Creates a task.', type: TaskResponseDto })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateTaskDto) {
     return this.tasksService.create(user.userId, dto);
   }
 
   @Patch(':id')
-  @ApiOkResponse({ description: 'Updates a task.' })
+  @ApiOkResponse({ description: 'Updates a task.', type: TaskResponseDto })
   update(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
@@ -59,13 +67,19 @@ export class TasksController {
   }
 
   @Delete(':id')
-  @ApiOkResponse({ description: 'Hard deletes a task.' })
+  @ApiOkResponse({
+    description: 'Hard deletes a task.',
+    type: DeletedResponseDto,
+  })
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.tasksService.remove(user.userId, id);
   }
 
   @Patch(':id/status')
-  @ApiOkResponse({ description: 'Updates the task source status.' })
+  @ApiOkResponse({
+    description: 'Updates the task source status.',
+    type: TaskResponseDto,
+  })
   updateStatus(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
@@ -77,6 +91,7 @@ export class TasksController {
   @Patch(':id/occurrences/status')
   @ApiOkResponse({
     description: 'Updates one recurring task occurrence status.',
+    type: TaskOccurrenceStatusResponseDto,
   })
   updateOccurrenceStatus(
     @CurrentUser() user: AuthUser,

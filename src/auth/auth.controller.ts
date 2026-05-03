@@ -6,6 +6,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UserProfileResponseDto } from '../common/dto/common-response.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthUser } from '../common/types/auth-user.type';
 import { AuthService } from './auth.service';
@@ -33,7 +34,10 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOkResponse({ description: 'Returns the authenticated user profile.' })
+  @ApiOkResponse({
+    description: 'Returns the authenticated user profile.',
+    type: UserProfileResponseDto,
+  })
   me(@CurrentUser() user: AuthUser) {
     return this.authService.me(user.userId);
   }
