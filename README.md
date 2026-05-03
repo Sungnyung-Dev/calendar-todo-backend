@@ -1,98 +1,192 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Calendar Todo Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS 기반 캘린더 중심 개인 일정/투두 관리 API입니다.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+- NestJS
+- TypeScript
+- MySQL
+- Prisma
+- REST API
+- JWT Bearer 인증
+- Swagger/OpenAPI
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Local Setup
 
-## Project setup
+`.env` 파일에 아래 변수를 준비합니다. 실제 값은 커밋하지 않습니다.
 
-```bash
-$ npm install
+```env
+DATABASE_URL=
+JWT_SECRET=
+JWT_EXPIRES_IN=
+PORT=
 ```
 
-## Compile and run the project
+의존성 설치:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+Prisma client 생성:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npx prisma generate
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+MySQL 서버를 실행한 뒤 migration 적용:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npx prisma migrate dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+개발 서버 실행:
 
-## Resources
+```bash
+npm run start:dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Swagger UI:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```text
+http://localhost:3000/api-docs
+```
 
-## Support
+`PORT`를 변경한 경우 해당 포트로 접속합니다.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Verification
 
-## Stay in touch
+```bash
+npm run build
+npm run lint
+npm run test
+npm run test:e2e
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+`npm run test:e2e`는 Supertest가 임시 HTTP 서버를 열기 때문에 실행 환경에 따라 로컬 포트 바인딩 권한이 필요할 수 있습니다.
 
-## License
+## Swagger Test Flow
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+1. `POST /auth/signup`으로 사용자 생성
+2. `POST /auth/login`으로 `accessToken` 발급
+3. Swagger 우측 상단 `Authorize` 클릭
+4. Bearer token 입력
+   - 입력 예: `Bearer eyJ...`
+5. `POST /categories`로 카테고리 생성
+6. `POST /events` 또는 `POST /tasks`로 일정/투두 생성
+7. `PATCH /events/:id/status` 또는 `PATCH /tasks/:id/status`로 원본 상태 변경
+8. 반복 항목은 `PATCH /events/:id/occurrences/status` 또는 `PATCH /tasks/:id/occurrences/status`로 특정 발생 날짜 상태 변경
+9. `GET /calendar?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`로 통합 캘린더 결과 확인
+10. `GET /search?q=keyword`로 일정/투두 통합 검색 확인
+
+## Domain Rules
+
+- 삭제는 hard delete입니다.
+- 모든 도메인 데이터는 JWT의 `userId` 기준으로 격리됩니다.
+- 다른 사용자의 category, event, task, occurrence에는 접근할 수 없습니다.
+- 상태값은 아래 네 가지입니다.
+  - `pending`
+  - `completed`
+  - `cancelled`
+  - `skipped`
+- 우선순위는 아래 세 가지입니다.
+  - `low`
+  - `medium`
+  - `high`
+- 일정과 투두는 DB에서 분리됩니다.
+- 캘린더 조회 API는 일정과 투두를 하나의 `items` 배열로 합쳐 반환합니다.
+
+## Recurrence
+
+반복 일정/반복 투두는 원본 row와 특정 발생 회차 상태를 분리합니다.
+
+- `Event.recurrenceRule`, `Task.recurrenceRule`은 반복 규칙 JSON입니다.
+- `EventOccurrence`, `TaskOccurrence`는 특정 날짜 발생분의 상태 override만 저장합니다.
+- occurrence row가 없으면 해당 발생분은 원본 `status`를 따릅니다.
+- occurrence row가 있으면 해당 발생분은 occurrence의 `status`를 우선합니다.
+- 반복 회차는 DB에 미리 모두 생성하지 않고, calendar 조회 기간 안에서 서버가 계산합니다.
+
+반복 규칙 예시:
+
+```json
+{
+  "frequency": "weekly",
+  "interval": 1,
+  "daysOfWeek": ["MON", "WED", "FRI"],
+  "endDate": "2026-12-31"
+}
+```
+
+현재 지원 범위:
+
+- `frequency`: `daily`, `weekly`, `monthly`
+- `interval`: 1 이상의 정수
+- `daysOfWeek`: weekly 반복에서 사용
+- `endDate`: 선택값, 없으면 조회 기간 안에서만 확장
+
+반복 투두는 발생 기준일이 필요하므로 `recurrenceRule`을 사용할 때 `dueDate`가 필요합니다.
+
+## Calendar Response
+
+```json
+{
+  "items": [
+    {
+      "type": "event",
+      "id": "eventId",
+      "occurrenceDate": "2026-05-04",
+      "title": "Workout",
+      "description": "Gym session",
+      "startAt": "2026-05-04T09:00:00.000Z",
+      "endAt": "2026-05-04T10:00:00.000Z",
+      "status": "pending",
+      "priority": "medium",
+      "category": {
+        "id": "categoryId",
+        "name": "Health",
+        "color": "#22c55e"
+      },
+      "isRecurring": true
+    },
+    {
+      "type": "task",
+      "id": "taskId",
+      "occurrenceDate": "2026-05-04",
+      "title": "Buy milk",
+      "description": null,
+      "dueDate": "2026-05-04",
+      "status": "completed",
+      "priority": "low",
+      "category": null,
+      "isRecurring": false
+    }
+  ]
+}
+```
+
+## Main API Groups
+
+- `POST /auth/signup`
+- `POST /auth/login`
+- `GET /auth/me`
+- `GET /categories`
+- `POST /categories`
+- `PATCH /categories/:id`
+- `DELETE /categories/:id`
+- `GET /events`
+- `GET /events/:id`
+- `POST /events`
+- `PATCH /events/:id`
+- `DELETE /events/:id`
+- `PATCH /events/:id/status`
+- `PATCH /events/:id/occurrences/status`
+- `GET /tasks`
+- `GET /tasks/:id`
+- `POST /tasks`
+- `PATCH /tasks/:id`
+- `DELETE /tasks/:id`
+- `PATCH /tasks/:id/status`
+- `PATCH /tasks/:id/occurrences/status`
+- `GET /calendar`
+- `GET /search`

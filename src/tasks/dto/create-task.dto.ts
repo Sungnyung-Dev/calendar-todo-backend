@@ -3,8 +3,10 @@ import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -13,6 +15,7 @@ import { Priority } from '../../common/enums/priority.enum';
 
 export class CreateTaskDto {
   @ApiProperty({ example: 'Buy milk' })
+  @IsNotEmpty()
   @IsString()
   @MaxLength(160)
   title: string;
@@ -24,6 +27,7 @@ export class CreateTaskDto {
 
   @ApiPropertyOptional({ example: '2026-05-04' })
   @IsOptional()
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
   @IsDateString()
   dueDate?: string;
 

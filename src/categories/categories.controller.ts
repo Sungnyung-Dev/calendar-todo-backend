@@ -15,6 +15,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import {
+  CategoryResponseDto,
+  DeletedResponseDto,
+} from '../common/dto/common-response.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { AuthUser } from '../common/types/auth-user.type';
 import { CategoriesService } from './categories.service';
@@ -31,19 +35,26 @@ export class CategoriesController {
   @Get()
   @ApiOkResponse({
     description: 'Returns categories owned by the current user.',
+    type: [CategoryResponseDto],
   })
   findAll(@CurrentUser() user: AuthUser) {
     return this.categoriesService.findAll(user.userId);
   }
 
   @Post()
-  @ApiCreatedResponse({ description: 'Creates a category.' })
+  @ApiCreatedResponse({
+    description: 'Creates a category.',
+    type: CategoryResponseDto,
+  })
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateCategoryDto) {
     return this.categoriesService.create(user.userId, dto);
   }
 
   @Patch(':id')
-  @ApiOkResponse({ description: 'Updates a category.' })
+  @ApiOkResponse({
+    description: 'Updates a category.',
+    type: CategoryResponseDto,
+  })
   update(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
@@ -53,7 +64,10 @@ export class CategoriesController {
   }
 
   @Delete(':id')
-  @ApiOkResponse({ description: 'Hard deletes a category.' })
+  @ApiOkResponse({
+    description: 'Hard deletes a category.',
+    type: DeletedResponseDto,
+  })
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.categoriesService.remove(user.userId, id);
   }

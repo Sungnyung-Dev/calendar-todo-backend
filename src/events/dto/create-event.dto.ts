@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsDateString,
   IsEnum,
+  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
@@ -13,6 +14,7 @@ import { Priority } from '../../common/enums/priority.enum';
 
 export class CreateEventDto {
   @ApiProperty({ example: 'Workout' })
+  @IsNotEmpty()
   @IsString()
   @MaxLength(160)
   title: string;
