@@ -3,9 +3,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import {
+  DeleteRecurringItemQueryDto,
+  DeleteRecurringItemScope,
+} from '../common/dto/delete-recurring-item-query.dto';
 import { UpdateOccurrenceStatusDto } from '../common/dto/occurrence-status.dto';
 import { UpdateStatusDto } from '../common/dto/status.dto';
-import { parseDateOnly } from '../common/utils/date.util';
+import { ItemStatus } from '../common/enums/item-status.enum';
+import {
+  addUtcDays,
+  parseDateOnly,
+  toDateOnly,
+} from '../common/utils/date.util';
+import { isRecurrenceOccurrenceDate } from '../common/utils/recurrence.util';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -98,9 +108,84 @@ export class TasksService {
     });
   }
 
-  async remove(userId: string, id: string) {
-    await this.ensureOwned(userId, id);
-    await this.prisma.task.delete({ where: { id } });
+  async remove(
+    userId: string,
+    id: string,
+    query: DeleteRecurringItemQueryDto = {},
+  ) {
+    const task = await this.ensureOwned(userId, id);
+    const scope = query.scope ?? DeleteRecurringItemScope.all;
+
+    if (!task.recurrenceRule) {
+      if (scope !== DeleteRecurringItemScope.all) {
+        throw new BadRequestException(
+          'Recurring delete scope requires a recurring task.',
+        );
+      }
+
+      await this.prisma.task.delete({ where: { id } });
+
+      return { deleted: true };
+    }
+
+    if (scope === DeleteRecurringItemScope.all) {
+      await this.prisma.task.delete({ where: { id } });
+
+      return { deleted: true };
+    }
+
+    if (!query.occurrenceDate) {
+      throw new BadRequestException(
+        'occurrenceDate is required for this delete scope.',
+      );
+    }
+
+    if (!task.dueDate) {
+      throw new BadRequestException('Recurring tasks require dueDate.');
+    }
+
+    const occurrenceDate = parseDateOnly(query.occurrenceDate);
+    this.ensureValidOccurrenceDate(
+      task.dueDate,
+      task.recurrenceRule,
+      occurrenceDate,
+    );
+
+    if (scope === DeleteRecurringItemScope.this) {
+      await this.prisma.taskOccurrence.upsert({
+        where: {
+          taskId_occurrenceDate: {
+            taskId: id,
+            occurrenceDate,
+          },
+        },
+        create: {
+          userId,
+          taskId: id,
+          occurrenceDate,
+          status: ItemStatus.cancelled,
+        },
+        update: {
+          status: ItemStatus.cancelled,
+        },
+      });
+
+      return { deleted: true };
+    }
+
+    const recurrenceEndDate = addUtcDays(occurrenceDate, -1);
+    const nextRule = {
+      ...this.toJsonObject(task.recurrenceRule),
+      endDate: toDateOnly(recurrenceEndDate),
+    };
+
+    await this.prisma.task.update({
+      where: { id },
+      data: {
+        recurrenceRule: this.toJson(nextRule),
+        recurrenceEndDate,
+      },
+    });
 
     return { deleted: true };
   }
@@ -176,6 +261,26 @@ export class TasksService {
     if (dto.recurrenceRule && !dto.dueDate) {
       throw new BadRequestException('Recurring tasks require dueDate.');
     }
+  }
+
+  private ensureValidOccurrenceDate(
+    baseDate: Date,
+    recurrenceRule: unknown,
+    occurrenceDate: Date,
+  ) {
+    if (!isRecurrenceOccurrenceDate(baseDate, recurrenceRule, occurrenceDate)) {
+      throw new BadRequestException(
+        'occurrenceDate must be within the recurrence range and match the recurrence rule.',
+      );
+    }
+  }
+
+  private toJsonObject(value: unknown): Record<string, unknown> {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new BadRequestException('Invalid recurrenceRule.');
+    }
+
+    return value as Record<string, unknown>;
   }
 
   private toJson(value: unknown): Prisma.InputJsonValue | undefined {

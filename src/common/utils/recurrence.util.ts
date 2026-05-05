@@ -94,6 +94,28 @@ export const expandRecurrenceDates = (
   return dates;
 };
 
+export const isRecurrenceOccurrenceDate = (
+  baseDate: Date,
+  recurrenceRule: unknown,
+  occurrenceDate: Date,
+): boolean => {
+  const rule = normalizeRule(recurrenceRule);
+  if (!rule) {
+    return false;
+  }
+
+  if (occurrenceDate < baseDate) {
+    return false;
+  }
+
+  const ruleEnd = rule.endDate ? parseDateOnly(rule.endDate) : null;
+  if (ruleEnd && occurrenceDate > ruleEnd) {
+    return false;
+  }
+
+  return isOccurrenceMatch(baseDate, occurrenceDate, rule);
+};
+
 export const buildOccurrenceMap = <T extends { occurrenceDate: Date }>(
   occurrences: T[],
 ): Map<string, T> =>

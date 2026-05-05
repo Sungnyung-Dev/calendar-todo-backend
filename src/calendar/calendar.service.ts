@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ItemStatus } from '../common/enums/item-status.enum';
 import {
   addUtcDays,
   parseDateOnly,
@@ -74,26 +75,34 @@ export class CalendarService {
             event.recurrenceRule,
             rangeStart,
             rangeEnd,
-          ).map((occurrenceDate) => {
-            const occurrenceKey = toDateOnly(occurrenceDate);
-            const occurrence = occurrenceMap.get(occurrenceKey);
-            return {
-              type: 'event' as const,
-              id: event.id,
-              occurrenceDate: occurrenceKey,
-              title: event.title,
-              description: event.description,
-              startAt: shiftDateTimeToOccurrenceDate(
-                event.startAt,
-                occurrenceDate,
-              ),
-              endAt: shiftDateTimeToOccurrenceDate(event.endAt, occurrenceDate),
-              status: occurrence?.status ?? event.status,
-              priority: event.priority,
-              category: event.category,
-              isRecurring: true,
-            };
-          });
+          )
+            .map((occurrenceDate) => {
+              const occurrenceKey = toDateOnly(occurrenceDate);
+              const occurrence = occurrenceMap.get(occurrenceKey);
+              return {
+                type: 'event' as const,
+                id: event.id,
+                occurrenceDate: occurrenceKey,
+                title: event.title,
+                description: event.description,
+                startAt: shiftDateTimeToOccurrenceDate(
+                  event.startAt,
+                  occurrenceDate,
+                ),
+                endAt: shiftDateTimeToOccurrenceDate(
+                  event.endAt,
+                  occurrenceDate,
+                ),
+                status: occurrence?.status ?? event.status,
+                priority: event.priority,
+                category: event.category,
+                isRecurring: true,
+              };
+            })
+            .filter((item) => {
+              const occurrence = occurrenceMap.get(item.occurrenceDate);
+              return occurrence?.status !== ItemStatus.cancelled;
+            });
         }
 
         const rangeEndExclusive = addUtcDays(rangeEnd, 1);
@@ -125,22 +134,27 @@ export class CalendarService {
             task.recurrenceRule,
             rangeStart,
             rangeEnd,
-          ).map((occurrenceDate) => {
-            const occurrenceKey = toDateOnly(occurrenceDate);
-            const occurrence = occurrenceMap.get(occurrenceKey);
-            return {
-              type: 'task' as const,
-              id: task.id,
-              occurrenceDate: occurrenceKey,
-              title: task.title,
-              description: task.description,
-              dueDate: occurrenceKey,
-              status: occurrence?.status ?? task.status,
-              priority: task.priority,
-              category: task.category,
-              isRecurring: true,
-            };
-          });
+          )
+            .map((occurrenceDate) => {
+              const occurrenceKey = toDateOnly(occurrenceDate);
+              const occurrence = occurrenceMap.get(occurrenceKey);
+              return {
+                type: 'task' as const,
+                id: task.id,
+                occurrenceDate: occurrenceKey,
+                title: task.title,
+                description: task.description,
+                dueDate: occurrenceKey,
+                status: occurrence?.status ?? task.status,
+                priority: task.priority,
+                category: task.category,
+                isRecurring: true,
+              };
+            })
+            .filter((item) => {
+              const occurrence = occurrenceMap.get(item.occurrenceDate);
+              return occurrence?.status !== ItemStatus.cancelled;
+            });
         }
 
         if (

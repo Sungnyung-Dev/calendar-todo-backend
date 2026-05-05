@@ -6,15 +6,21 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOkResponse,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import {
+  DeleteRecurringItemQueryDto,
+  DeleteRecurringItemScope,
+} from '../common/dto/delete-recurring-item-query.dto';
 import {
   DeletedResponseDto,
   TaskOccurrenceStatusResponseDto,
@@ -67,12 +73,34 @@ export class TasksController {
   }
 
   @Delete(':id')
+  @ApiQuery({
+    name: 'scope',
+    required: false,
+    enum: DeleteRecurringItemScope,
+    description:
+      'Recurring delete scope. all deletes the source task, this cancels one occurrence, this-and-future ends recurrence before occurrenceDate. Defaults to all.',
+  })
+  @ApiQuery({
+    name: 'occurrenceDate',
+    required: false,
+    example: '2026-05-11',
+    description:
+      'Required for scope=this or scope=this-and-future. Must be YYYY-MM-DD and an actual recurrence occurrence date.',
+  })
   @ApiOkResponse({
-    description: 'Hard deletes a task.',
+    description:
+      'Deletes a task. Recurring tasks can delete all, one occurrence, or this-and-future using query parameters.',
+    schema: {
+      example: { deleted: true },
+    },
     type: DeletedResponseDto,
   })
-  remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
-    return this.tasksService.remove(user.userId, id);
+  remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Query() query: DeleteRecurringItemQueryDto,
+  ) {
+    return this.tasksService.remove(user.userId, id, query);
   }
 
   @Patch(':id/status')
