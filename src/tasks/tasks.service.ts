@@ -64,6 +64,12 @@ export class TasksService {
   async create(userId: string, dto: CreateTaskDto) {
     await this.ensureCategoryOwned(userId, dto.categoryId);
     this.ensureRecurringTaskHasDueDate(dto);
+    if (dto.dueDate) {
+      this.ensureValidRecurrenceEndDate(
+        dto.recurrenceRule,
+        parseDateOnly(dto.dueDate),
+      );
+    }
 
     return this.prisma.task.create({
       data: {
@@ -85,11 +91,22 @@ export class TasksService {
   async update(userId: string, id: string, dto: UpdateTaskDto) {
     const task = await this.ensureOwned(userId, id);
     await this.ensureCategoryOwned(userId, dto.categoryId);
+    const nextDueDate = dto.dueDate
+      ? parseDateOnly(dto.dueDate)
+      : task.dueDate;
+    const nextRecurrenceRule =
+      dto.recurrenceRule === undefined
+        ? task.recurrenceRule
+        : dto.recurrenceRule;
     this.ensureRecurringTaskHasDueDate({
       ...dto,
       dueDate:
         dto.dueDate ?? (task.dueDate ? task.dueDate.toISOString() : undefined),
     });
+    if (nextDueDate) {
+      this.ensureValidRecurrenceEndDate(nextRecurrenceRule, nextDueDate);
+    }
+    const recurrenceRuleWasProvided = dto.recurrenceRule !== undefined;
 
     return this.prisma.task.update({
       where: { id },
@@ -100,8 +117,10 @@ export class TasksService {
         categoryId: dto.categoryId,
         priority: dto.priority,
         recurrenceRule: this.toJson(dto.recurrenceRule),
-        recurrenceEndDate: dto.recurrenceRule?.endDate
-          ? parseDateOnly(dto.recurrenceRule.endDate)
+        recurrenceEndDate: recurrenceRuleWasProvided
+          ? dto.recurrenceRule?.endDate
+            ? parseDateOnly(dto.recurrenceRule.endDate)
+            : null
           : undefined,
       },
       include: taskInclude,
@@ -205,8 +224,22 @@ export class TasksService {
     id: string,
     dto: UpdateOccurrenceStatusDto,
   ) {
-    await this.ensureOwned(userId, id);
+    const task = await this.ensureOwned(userId, id);
+    if (!task.recurrenceRule) {
+      throw new BadRequestException(
+        'Occurrence status updates require a recurring task.',
+      );
+    }
+    if (!task.dueDate) {
+      throw new BadRequestException('Recurring tasks require dueDate.');
+    }
+
     const occurrenceDate = parseDateOnly(dto.occurrenceDate);
+    this.ensureValidOccurrenceDate(
+      task.dueDate,
+      task.recurrenceRule,
+      occurrenceDate,
+    );
 
     return this.prisma.taskOccurrence.upsert({
       where: {
@@ -260,6 +293,24 @@ export class TasksService {
   }) {
     if (dto.recurrenceRule && !dto.dueDate) {
       throw new BadRequestException('Recurring tasks require dueDate.');
+    }
+  }
+
+  private ensureValidRecurrenceEndDate(
+    recurrenceRule: { endDate?: string } | unknown,
+    baseDate: Date,
+  ) {
+    if (
+      recurrenceRule &&
+      typeof recurrenceRule === 'object' &&
+      !Array.isArray(recurrenceRule) &&
+      'endDate' in recurrenceRule &&
+      typeof recurrenceRule.endDate === 'string' &&
+      parseDateOnly(recurrenceRule.endDate) < baseDate
+    ) {
+      throw new BadRequestException(
+        'recurrenceRule.endDate cannot be earlier than task dueDate.',
+      );
     }
   }
 

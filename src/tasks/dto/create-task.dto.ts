@@ -41,7 +41,11 @@ export class CreateTaskDto {
   @IsEnum(Priority)
   priority?: Priority;
 
-  @ApiPropertyOptional({ type: RecurrenceRuleDto })
+  @ApiPropertyOptional({
+    type: RecurrenceRuleDto,
+    description:
+      'Optional recurrence rule. Recurring tasks require dueDate; weekly may use daysOfWeek; daily/monthly must not. endDate cannot be earlier than dueDate.',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => RecurrenceRuleDto)

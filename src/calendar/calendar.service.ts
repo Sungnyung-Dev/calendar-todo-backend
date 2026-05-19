@@ -97,6 +97,8 @@ export class CalendarService {
                 priority: event.priority,
                 category: event.category,
                 isRecurring: true,
+                recurrenceRule: event.recurrenceRule,
+                recurrenceEndDate: event.recurrenceEndDate,
               };
             })
             .filter((item) => {
@@ -123,6 +125,8 @@ export class CalendarService {
             priority: event.priority,
             category: event.category,
             isRecurring: false,
+            recurrenceRule: event.recurrenceRule,
+            recurrenceEndDate: event.recurrenceEndDate,
           },
         ];
       }),
@@ -149,6 +153,8 @@ export class CalendarService {
                 priority: task.priority,
                 category: task.category,
                 isRecurring: true,
+                recurrenceRule: task.recurrenceRule,
+                recurrenceEndDate: task.recurrenceEndDate,
               };
             })
             .filter((item) => {
@@ -177,6 +183,8 @@ export class CalendarService {
             priority: task.priority,
             category: task.category,
             isRecurring: false,
+            recurrenceRule: task.recurrenceRule,
+            recurrenceEndDate: task.recurrenceEndDate,
           },
         ];
       }),

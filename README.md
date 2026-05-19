@@ -113,6 +113,9 @@ npm run test:e2e
 - occurrence row가 없으면 해당 발생분은 원본 `status`를 따릅니다.
 - occurrence row가 있으면 해당 발생분은 occurrence의 `status`를 우선합니다.
 - 반복 회차는 DB에 미리 모두 생성하지 않고, calendar 조회 기간 안에서 서버가 계산합니다.
+- occurrence status 변경 API는 실제 반복 발생일만 허용합니다.
+- calendar 응답에서는 `cancelled` occurrence만 숨기고, `skipped` occurrence와 원본 row의 `cancelled`/`skipped` 상태는 그대로 노출합니다.
+- 현재 occurrence 테이블은 상태 override만 저장하므로, 특정 한 회차의 제목/시간만 수정하는 기능은 아직 표현하지 않습니다.
 
 반복 규칙 예시:
 
@@ -129,8 +132,8 @@ npm run test:e2e
 
 - `frequency`: `daily`, `weekly`, `monthly`
 - `interval`: 1 이상의 정수
-- `daysOfWeek`: weekly 반복에서 사용
-- `endDate`: 선택값, 없으면 조회 기간 안에서만 확장
+- `daysOfWeek`: weekly 반복에서만 사용하며, 값이 있다면 빈 배열일 수 없습니다.
+- `endDate`: 선택값, 없으면 조회 기간 안에서만 확장되며 기준일보다 빠를 수 없습니다.
 
 반복 투두는 발생 기준일이 필요하므로 `recurrenceRule`을 사용할 때 `dueDate`가 필요합니다.
 
@@ -154,7 +157,14 @@ npm run test:e2e
         "name": "Health",
         "color": "#22c55e"
       },
-      "isRecurring": true
+      "isRecurring": true,
+      "recurrenceRule": {
+        "frequency": "weekly",
+        "interval": 1,
+        "daysOfWeek": ["MON"],
+        "endDate": "2026-12-31"
+      },
+      "recurrenceEndDate": "2026-12-31T00:00:00.000Z"
     },
     {
       "type": "task",
@@ -166,7 +176,9 @@ npm run test:e2e
       "status": "completed",
       "priority": "low",
       "category": null,
-      "isRecurring": false
+      "isRecurring": false,
+      "recurrenceRule": null,
+      "recurrenceEndDate": null
     }
   ]
 }

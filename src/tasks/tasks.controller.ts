@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiQuery,
@@ -118,8 +119,13 @@ export class TasksController {
 
   @Patch(':id/occurrences/status')
   @ApiOkResponse({
-    description: 'Updates one recurring task occurrence status.',
+    description:
+      'Updates one recurring task occurrence status. occurrenceDate must be an actual generated recurrence date.',
     type: TaskOccurrenceStatusResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Returned when the task is not recurring, occurrenceDate is outside the recurrence range, or occurrenceDate does not match the recurrence rule.',
   })
   updateOccurrenceStatus(
     @CurrentUser() user: AuthUser,

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBadRequestResponse,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiQuery,
@@ -121,8 +122,13 @@ export class EventsController {
 
   @Patch(':id/occurrences/status')
   @ApiOkResponse({
-    description: 'Updates one recurring event occurrence status.',
+    description:
+      'Updates one recurring event occurrence status. occurrenceDate must be an actual generated recurrence date.',
     type: EventOccurrenceStatusResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      'Returned when the event is not recurring, occurrenceDate is outside the recurrence range, or occurrenceDate does not match the recurrence rule.',
   })
   updateOccurrenceStatus(
     @CurrentUser() user: AuthUser,

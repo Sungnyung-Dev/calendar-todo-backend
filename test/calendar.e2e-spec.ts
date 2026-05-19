@@ -43,6 +43,7 @@ describe('CalendarController (e2e)', () => {
         status: 'pending',
         priority: 'medium',
         recurrenceRule: null,
+        recurrenceEndDate: null,
         category: { id: 'category-health', name: 'Health', color: '#22c55e' },
         occurrences: [],
       },
@@ -61,11 +62,16 @@ describe('CalendarController (e2e)', () => {
           daysOfWeek: ['TUE'],
           endDate: '2026-05-31',
         },
+        recurrenceEndDate: new Date('2026-05-31T00:00:00.000Z'),
         category: null,
         occurrences: [
           {
             occurrenceDate: new Date('2026-05-12T00:00:00.000Z'),
             status: 'completed',
+          },
+          {
+            occurrenceDate: new Date('2026-05-05T00:00:00.000Z'),
+            status: 'cancelled',
           },
         ],
       },
@@ -81,6 +87,7 @@ describe('CalendarController (e2e)', () => {
         status: 'completed',
         priority: 'low',
         recurrenceRule: null,
+        recurrenceEndDate: null,
         category: null,
         occurrences: [],
       },
@@ -97,6 +104,7 @@ describe('CalendarController (e2e)', () => {
           interval: 2,
           endDate: '2026-05-09',
         },
+        recurrenceEndDate: new Date('2026-05-09T00:00:00.000Z'),
         category: null,
         occurrences: [
           {
@@ -161,6 +169,8 @@ describe('CalendarController (e2e)', () => {
           occurrenceDate: '2026-05-04',
           status: 'pending',
           isRecurring: false,
+          recurrenceRule: null,
+          recurrenceEndDate: null,
         }),
         expect.objectContaining({
           type: 'task',
@@ -176,6 +186,13 @@ describe('CalendarController (e2e)', () => {
           occurrenceDate: '2026-05-12',
           status: 'completed',
           isRecurring: true,
+          recurrenceRule: {
+            frequency: 'weekly',
+            interval: 1,
+            daysOfWeek: ['TUE'],
+            endDate: '2026-05-31',
+          },
+          recurrenceEndDate: '2026-05-31T00:00:00.000Z',
         }),
         expect.objectContaining({
           type: 'task',
@@ -183,10 +200,25 @@ describe('CalendarController (e2e)', () => {
           occurrenceDate: '2026-05-07',
           status: 'skipped',
           isRecurring: true,
+          recurrenceRule: {
+            frequency: 'daily',
+            interval: 2,
+            endDate: '2026-05-09',
+          },
+          recurrenceEndDate: '2026-05-09T00:00:00.000Z',
         }),
       ]),
     );
-    expect(body.items).toHaveLength(7);
+    expect(body.items).toHaveLength(6);
+    expect(body.items).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'event',
+          id: 'event-recurring',
+          occurrenceDate: '2026-05-05',
+        }),
+      ]),
+    );
     expect(prismaMock.event.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { userId: 'user-one' } }),
     );

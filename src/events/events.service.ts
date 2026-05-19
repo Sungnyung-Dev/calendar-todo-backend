@@ -67,6 +67,10 @@ export class EventsService {
     const startAt = new Date(dto.startAt);
     const endAt = new Date(dto.endAt);
     this.ensureValidRange(startAt, endAt);
+    this.ensureValidRecurrenceEndDate(
+      dto.recurrenceRule,
+      parseDateOnly(toDateOnly(startAt)),
+    );
 
     return this.prisma.event.create({
       data: {
@@ -93,6 +97,15 @@ export class EventsService {
     const nextStartAt = dto.startAt ? new Date(dto.startAt) : event.startAt;
     const nextEndAt = dto.endAt ? new Date(dto.endAt) : event.endAt;
     this.ensureValidRange(nextStartAt, nextEndAt);
+    const nextRecurrenceRule =
+      dto.recurrenceRule === undefined
+        ? event.recurrenceRule
+        : dto.recurrenceRule;
+    this.ensureValidRecurrenceEndDate(
+      nextRecurrenceRule,
+      parseDateOnly(toDateOnly(nextStartAt)),
+    );
+    const recurrenceRuleWasProvided = dto.recurrenceRule !== undefined;
 
     return this.prisma.event.update({
       where: { id },
@@ -104,8 +117,10 @@ export class EventsService {
         categoryId: dto.categoryId,
         priority: dto.priority,
         recurrenceRule: this.toJson(dto.recurrenceRule),
-        recurrenceEndDate: dto.recurrenceRule?.endDate
-          ? parseDateOnly(dto.recurrenceRule.endDate)
+        recurrenceEndDate: recurrenceRuleWasProvided
+          ? dto.recurrenceRule?.endDate
+            ? parseDateOnly(dto.recurrenceRule.endDate)
+            : null
           : undefined,
       },
       include: eventInclude,
@@ -205,8 +220,19 @@ export class EventsService {
     id: string,
     dto: UpdateOccurrenceStatusDto,
   ) {
-    await this.ensureOwned(userId, id);
+    const event = await this.ensureOwned(userId, id);
+    if (!event.recurrenceRule) {
+      throw new BadRequestException(
+        'Occurrence status updates require a recurring event.',
+      );
+    }
+
     const occurrenceDate = parseDateOnly(dto.occurrenceDate);
+    this.ensureValidOccurrenceDate(
+      parseDateOnly(toDateOnly(event.startAt)),
+      event.recurrenceRule,
+      occurrenceDate,
+    );
 
     return this.prisma.eventOccurrence.upsert({
       where: {
@@ -257,6 +283,24 @@ export class EventsService {
   private ensureValidRange(startAt: Date, endAt: Date) {
     if (endAt <= startAt) {
       throw new BadRequestException('endAt must be later than startAt.');
+    }
+  }
+
+  private ensureValidRecurrenceEndDate(
+    recurrenceRule: { endDate?: string } | unknown,
+    baseDate: Date,
+  ) {
+    if (
+      recurrenceRule &&
+      typeof recurrenceRule === 'object' &&
+      !Array.isArray(recurrenceRule) &&
+      'endDate' in recurrenceRule &&
+      typeof recurrenceRule.endDate === 'string' &&
+      parseDateOnly(recurrenceRule.endDate) < baseDate
+    ) {
+      throw new BadRequestException(
+        'recurrenceRule.endDate cannot be earlier than the event start date.',
+      );
     }
   }
 

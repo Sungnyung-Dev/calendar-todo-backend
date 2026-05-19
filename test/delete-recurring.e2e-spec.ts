@@ -88,6 +88,7 @@ describe('Recurring delete policy (e2e)', () => {
     event: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      create: jest.fn(),
       delete: jest.fn(),
       update: jest.fn(),
     },
@@ -97,6 +98,7 @@ describe('Recurring delete policy (e2e)', () => {
     task: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      create: jest.fn(),
       delete: jest.fn(),
       update: jest.fn(),
     },
@@ -123,6 +125,25 @@ describe('Recurring delete policy (e2e)', () => {
           endDate: '2026-05-15',
         },
         recurrenceEndDate: new Date('2026-05-15T00:00:00.000Z'),
+        category: null,
+      },
+      {
+        id: 'event-weekly',
+        userId: 'user-one',
+        categoryId: null,
+        title: 'Weekly sync',
+        description: null,
+        startAt: new Date('2026-05-04T09:00:00.000Z'),
+        endAt: new Date('2026-05-04T09:30:00.000Z'),
+        status: 'pending',
+        priority: 'medium',
+        recurrenceRule: {
+          frequency: 'weekly',
+          interval: 1,
+          daysOfWeek: ['MON'],
+          endDate: '2026-05-25',
+        },
+        recurrenceEndDate: new Date('2026-05-25T00:00:00.000Z'),
         category: null,
       },
       {
@@ -156,6 +177,24 @@ describe('Recurring delete policy (e2e)', () => {
           endDate: '2026-05-15',
         },
         recurrenceEndDate: new Date('2026-05-15T00:00:00.000Z'),
+        category: null,
+      },
+      {
+        id: 'task-weekly',
+        userId: 'user-one',
+        categoryId: null,
+        title: 'Weekly review',
+        description: null,
+        dueDate: new Date('2026-05-04T00:00:00.000Z'),
+        status: 'pending',
+        priority: 'medium',
+        recurrenceRule: {
+          frequency: 'weekly',
+          interval: 1,
+          daysOfWeek: ['MON'],
+          endDate: '2026-05-25',
+        },
+        recurrenceEndDate: new Date('2026-05-25T00:00:00.000Z'),
         category: null,
       },
       {
@@ -199,6 +238,19 @@ describe('Recurring delete policy (e2e)', () => {
     prismaMock.event.delete.mockImplementation(({ where }) => {
       events = events.filter((event) => event.id !== where.id);
       return { id: where.id };
+    });
+    prismaMock.event.create.mockImplementation(({ data }) => {
+      const event: TestEvent = {
+        id: `event-created-${events.length + 1}`,
+        category: null,
+        status: 'pending',
+        priority: 'medium',
+        description: null,
+        categoryId: null,
+        ...data,
+      };
+      events.push(event);
+      return event;
     });
     prismaMock.event.update.mockImplementation(({ where, data }) => {
       const event = events.find((item) => item.id === where.id);
@@ -250,6 +302,19 @@ describe('Recurring delete policy (e2e)', () => {
     prismaMock.task.delete.mockImplementation(({ where }) => {
       tasks = tasks.filter((task) => task.id !== where.id);
       return { id: where.id };
+    });
+    prismaMock.task.create.mockImplementation(({ data }) => {
+      const task: TestTask = {
+        id: `task-created-${tasks.length + 1}`,
+        category: null,
+        status: 'pending',
+        priority: 'medium',
+        description: null,
+        categoryId: null,
+        ...data,
+      };
+      tasks.push(task);
+      return task;
     });
     prismaMock.task.update.mockImplementation(({ where, data }) => {
       const task = tasks.find((item) => item.id === where.id);
@@ -438,5 +503,204 @@ describe('Recurring delete policy (e2e)', () => {
       .delete('/tasks/task-recurring')
       .query({ scope: 'this', occurrenceDate: '2026-05-20' })
       .expect(400);
+  });
+
+  it('updates only valid recurring event occurrence dates', async () => {
+    await request(app.getHttpServer())
+      .patch('/events/event-weekly/occurrences/status')
+      .send({ occurrenceDate: '2026-05-11', status: 'completed' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .patch('/events/event-weekly/occurrences/status')
+      .send({ occurrenceDate: '2026-05-12', status: 'completed' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch('/events/event-weekly/occurrences/status')
+      .send({ occurrenceDate: '2026-06-01', status: 'completed' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch('/events/event-one/occurrences/status')
+      .send({ occurrenceDate: '2026-05-10', status: 'completed' })
+      .expect(400);
+  });
+
+  it('updates only valid recurring task occurrence dates', async () => {
+    await request(app.getHttpServer())
+      .patch('/tasks/task-weekly/occurrences/status')
+      .send({ occurrenceDate: '2026-05-11', status: 'completed' })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .patch('/tasks/task-weekly/occurrences/status')
+      .send({ occurrenceDate: '2026-05-12', status: 'completed' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch('/tasks/task-weekly/occurrences/status')
+      .send({ occurrenceDate: '2026-06-01', status: 'completed' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch('/tasks/task-one/occurrences/status')
+      .send({ occurrenceDate: '2026-05-10', status: 'completed' })
+      .expect(400);
+  });
+
+  it('rejects invalid recurrence rule combinations and early end dates', async () => {
+    await request(app.getHttpServer())
+      .post('/events')
+      .send({
+        title: 'Invalid daily days',
+        startAt: '2026-05-10T09:00:00.000Z',
+        endAt: '2026-05-10T10:00:00.000Z',
+        recurrenceRule: {
+          frequency: 'daily',
+          daysOfWeek: ['MON'],
+        },
+      })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/events')
+      .send({
+        title: 'Invalid monthly days',
+        startAt: '2026-05-10T09:00:00.000Z',
+        endAt: '2026-05-10T10:00:00.000Z',
+        recurrenceRule: {
+          frequency: 'monthly',
+          daysOfWeek: ['MON'],
+        },
+      })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/events')
+      .send({
+        title: 'Empty weekly days',
+        startAt: '2026-05-10T09:00:00.000Z',
+        endAt: '2026-05-10T10:00:00.000Z',
+        recurrenceRule: {
+          frequency: 'weekly',
+          daysOfWeek: [],
+        },
+      })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/events')
+      .send({
+        title: 'Early end event',
+        startAt: '2026-05-10T09:00:00.000Z',
+        endAt: '2026-05-10T10:00:00.000Z',
+        recurrenceRule: {
+          frequency: 'daily',
+          endDate: '2026-05-09',
+        },
+      })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/tasks')
+      .send({
+        title: 'Early end task',
+        dueDate: '2026-05-10',
+        recurrenceRule: {
+          frequency: 'daily',
+          endDate: '2026-05-09',
+        },
+      })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .post('/tasks')
+      .send({
+        title: 'Recurring without due date',
+        recurrenceRule: {
+          frequency: 'daily',
+        },
+      })
+      .expect(400);
+  });
+
+  it('keeps recurrenceRule.endDate and recurrenceEndDate synchronized on create and update', async () => {
+    await request(app.getHttpServer())
+      .post('/events')
+      .send({
+        title: 'Created recurring event',
+        startAt: '2026-05-10T09:00:00.000Z',
+        endAt: '2026-05-10T10:00:00.000Z',
+        recurrenceRule: {
+          frequency: 'daily',
+          endDate: '2026-05-20',
+        },
+      })
+      .expect(201);
+
+    const createdEvent = events.find(
+      (event) => event.title === 'Created recurring event',
+    );
+    expect(createdEvent?.recurrenceRule?.endDate).toBe('2026-05-20');
+    expect(createdEvent?.recurrenceEndDate?.toISOString()).toBe(
+      '2026-05-20T00:00:00.000Z',
+    );
+
+    await request(app.getHttpServer())
+      .patch('/events/event-weekly')
+      .send({
+        recurrenceRule: {
+          frequency: 'weekly',
+          daysOfWeek: ['MON'],
+        },
+      })
+      .expect(200);
+    expect(events.find((event) => event.id === 'event-weekly')?.recurrenceRule)
+      .toEqual({
+        frequency: 'weekly',
+        daysOfWeek: ['MON'],
+      });
+    expect(
+      events.find((event) => event.id === 'event-weekly')?.recurrenceEndDate,
+    ).toBeNull();
+
+    await request(app.getHttpServer())
+      .post('/tasks')
+      .send({
+        title: 'Created recurring task',
+        dueDate: '2026-05-10',
+        recurrenceRule: {
+          frequency: 'daily',
+          endDate: '2026-05-20',
+        },
+      })
+      .expect(201);
+
+    const createdTask = tasks.find(
+      (task) => task.title === 'Created recurring task',
+    );
+    expect(createdTask?.recurrenceRule?.endDate).toBe('2026-05-20');
+    expect(createdTask?.recurrenceEndDate?.toISOString()).toBe(
+      '2026-05-20T00:00:00.000Z',
+    );
+
+    await request(app.getHttpServer())
+      .patch('/tasks/task-weekly')
+      .send({
+        recurrenceRule: {
+          frequency: 'weekly',
+          daysOfWeek: ['MON'],
+        },
+      })
+      .expect(200);
+    expect(tasks.find((task) => task.id === 'task-weekly')?.recurrenceRule)
+      .toEqual({
+        frequency: 'weekly',
+        daysOfWeek: ['MON'],
+      });
+    expect(
+      tasks.find((task) => task.id === 'task-weekly')?.recurrenceEndDate,
+    ).toBeNull();
   });
 });

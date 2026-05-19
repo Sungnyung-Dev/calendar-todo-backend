@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CategorySummaryDto } from '../../common/dto/common-response.dto';
+import { RecurrenceRuleDto } from '../../common/dto/recurrence-rule.dto';
 import { ItemStatus } from '../../common/enums/item-status.enum';
 import { Priority } from '../../common/enums/priority.enum';
 
@@ -36,6 +37,12 @@ export class CalendarEventItemDto {
 
   @ApiProperty({ example: true })
   isRecurring: boolean;
+
+  @ApiProperty({ type: RecurrenceRuleDto, nullable: true })
+  recurrenceRule: RecurrenceRuleDto | null;
+
+  @ApiProperty({ example: '2026-12-31T00:00:00.000Z', nullable: true })
+  recurrenceEndDate: Date | null;
 }
 
 export class CalendarTaskItemDto {
@@ -68,6 +75,12 @@ export class CalendarTaskItemDto {
 
   @ApiProperty({ example: false })
   isRecurring: boolean;
+
+  @ApiProperty({ type: RecurrenceRuleDto, nullable: true })
+  recurrenceRule: RecurrenceRuleDto | null;
+
+  @ApiProperty({ example: '2026-12-31T00:00:00.000Z', nullable: true })
+  recurrenceEndDate: Date | null;
 }
 
 export class CalendarResponseDto {

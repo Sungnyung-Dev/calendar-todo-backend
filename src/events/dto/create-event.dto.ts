@@ -42,7 +42,11 @@ export class CreateEventDto {
   @IsEnum(Priority)
   priority?: Priority;
 
-  @ApiPropertyOptional({ type: RecurrenceRuleDto })
+  @ApiPropertyOptional({
+    type: RecurrenceRuleDto,
+    description:
+      'Optional recurrence rule. weekly may use daysOfWeek; daily/monthly must not. endDate cannot be earlier than startAt.',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => RecurrenceRuleDto)
